@@ -1,0 +1,51 @@
+REQUEST FOR PROPOSALS (RFP)
+NATIONAL COMPETITIVE BIDDING (NCB)
+
+PROCUREMENT REFERENCE NO: ICTA/GOSL/2026/RFP/088
+PROCUREMENT ENTITY: Ministry of Digital Infrastructure and Information Communication Technology Agency (ICTA)
+PROCUREMENT TITLE: Turnkey Implementation of National Cloud Infrastructure and Multi-Agency e-Services Gateway
+
+1. INVITATION FOR BIDS
+The Ministry of Digital Infrastructure invites sealed bids from eligible international and national bidders for the supply, deployment, integration, and 24x7 operational maintenance of the National Cloud Infrastructure Platform.
+
+2. KEY PROCUREMENT DATES AND TIMELINE
+- Tender Publish Date: 15th January 2026
+- Pre-Bid Clarification Meeting: 02nd February 2026 at 10:00 AM (ICTA Auditorium)
+- Deadline for Request for Clarifications: 10th February 2026
+- Bid Submission Deadline: 18th March 2026 at 14:00 hrs (Local Time)
+- Bid Opening Date & Time: 18th March 2026 at 14:30 hrs
+- Bid Validity Period: 120 calendar days from the date of bid submission deadline.
+
+3. BID SECURITY AND BANK GUARANTEE
+Bidders shall furnish a Bid Security (Bid Bond) issued by an approved licensed commercial bank in the amount of USD 45,000 (or equivalent in Sri Lankan Rupees LKR 14,500,000). The Bid Security shall remain valid for 148 calendar days from the date of bid opening (minimum 28 days beyond the bid validity period).
+
+4. ELIGIBILITY AND QUALIFICATION CRITERIA
+To qualify for contract award, bidders must fulfill the following mandatory criteria:
+a) Minimum Average Annual Turnover (MAAT): The bidder (or lead JV partner) must have an average annual turnover of not less than USD 5,000,000 during the last three (3) consecutive financial years.
+b) Prior Experience: Successful completion of at least two (2) turnkey government or enterprise cloud infrastructure projects of similar scale and complexity within the last five (5) years.
+c) Joint Venture (JV): Joint Ventures or Consortia are permitted. The Lead Partner must possess at least 51% equity share and lead the technical project management. A legally notarized Joint Venture Agreement specifying member roles must be submitted with the technical proposal.
+d) Certifications: ISO 9001 (Quality Management) and ISO/IEC 27001 (Information Security Management) certifications are mandatory for the lead entity.
+e) Manufacturer Authorization Form (MAF): Original Manufacturer's Authorization Form must be furnished for all servers, enterprise storage arrays, virtualization hypervisors, and core networking switches.
+
+5. SCOPE OF TECHNICAL SOLUTION
+The selected vendor shall provide:
+- Tier-III compliant High Availability Cloud Hardware & Software Architecture.
+- Hyper-Converged Infrastructure (HCI) with 2,000 vCPU, 16 TB RAM, and 500 TB All-Flash Enterprise NVMe Storage.
+- Software Defined Networking (SDN) and Next-Generation Firewall (NGFW) with multi-tenant isolation.
+- Disaster Recovery (DR) Site Replication with RPO < 15 minutes and RTO < 1 hour.
+- Comprehensive 3-Year 24x7 Enterprise Platinum Support & Service Level Agreement (SLA 99.98%).
+
+6. LIQUIDATED DAMAGES AND PENALTIES
+Failure to achieve operational milestones within the agreed delivery schedule shall attract Liquidated Damages at the rate of 0.5% of the contract price per week of delay, up to a maximum penalty ceiling of 10% of the total contract price.
+
+7. MANDATORY SUBMISSION CHECKLIST
+The bid proposal must include:
+1. Duly signed Bid Submission Form and Financial Proposal.
+2. Original Bank Guarantee for Bid Security.
+3. Power of Attorney authorizing the signatory.
+4. Audited Financial Statements for 2023, 2024, and 2025.
+5. Manufacturer Authorization Letters (MAF).
+6. Notarized Joint Venture (JV) Agreement (if participating as JV).
+7. Valid Tax Clearance Certificate and Business Registration Certificate.
+8. Client Reference Letters and project completion certificates.
+9. Proposed Solution Architecture, Implementation Roadmap, and SLA commitments.

@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TenderHub - Enterprise Tender Management Platform</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Font Awesome Icons CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- SheetJS (xlsx.full.min.js) for Excel export -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <!-- PDF.js for Client-Side Document Analysis -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <!-- Custom Stylesheet -->
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col antialiased">
+
+    <!-- Top Navigation Header -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- Brand Logo & Name -->
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-700 to-indigo-500 flex items-center justify-center text-white shadow-md shadow-blue-500/20">
+                        <i class="fa-solid fa-briefcase text-lg"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-lg text-slate-900 tracking-tight leading-none flex items-center gap-2">
+                            TenderHub
+                            <span class="text-[10px] font-semibold uppercase tracking-wider bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">Pro</span>
+                        </h1>
+                        <p class="text-xs text-slate-500 font-medium">Tender & Bid Operations Platform</p>
+                    </div>
+                </div>
+
+                <!-- Quick Action Buttons -->
+                <div class="flex items-center gap-2.5">
+                    <!-- Google Sheets Quick Copy Button -->
+                    <button id="btn-copy-gsheet-all" class="hidden sm:inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-lg border border-emerald-300 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 transition shadow-sm" title="Copy formatted data directly into Google Sheets (Ctrl+V ready)">
+                        <i class="fa-solid fa-table text-emerald-600"></i>
+                        <span>Copy for Google Sheets</span>
+                    </button>
+
+                    <!-- Download Excel (.xlsx) Button -->
+                    <button id="btn-export-excel-all" class="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition shadow-sm shadow-emerald-600/20" title="Export all tenders to Excel (.xlsx)">
+                        <i class="fa-solid fa-file-excel"></i>
+                        <span>Download Excel</span>
+                    </button>
+
+                    <!-- Add New Tender Button -->
+                    <button id="btn-new-tender" class="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition shadow-sm shadow-blue-600/20">
+                        <i class="fa-solid fa-plus"></i>
+                        <span>New Tender</span>
+                    </button>
+
+                    <!-- System Backup/Restore Dropdown Toggle -->
+                    <div class="relative">
+                        <button id="btn-settings-toggle" class="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition" title="Data Backup & Restore">
+                            <i class="fa-solid fa-ellipsis-vertical"></i>
+                        </button>
+                        <div id="settings-menu" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-slate-200 py-1.5 z-50 text-xs">
+                            <button id="btn-backup-json" class="w-full text-left px-4 py-2 text-slate-700 hover:bg-slate-50 flex items-center gap-2.5">
+                                <i class="fa-solid fa-cloud-arrow-down text-blue-600"></i> Backup All Data (JSON)
+                            </button>
+                            <label class="w-full text-left px-4 py-2 text-slate-700 hover:bg-slate-50 flex items-center gap-2.5 cursor-pointer">
+                                <i class="fa-solid fa-cloud-arrow-up text-amber-600"></i> Restore from Backup
+                                <input type="file" id="input-restore-file" accept=".json" class="hidden">
+                            </label>
+                            <div class="border-t border-slate-100 my-1"></div>
+                            <button id="btn-reset-sample" class="w-full text-left px-4 py-2 text-rose-600 hover:bg-rose-50 flex items-center gap-2.5">
+                                <i class="fa-solid fa-rotate-right"></i> Reset to Sample Tenders
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+        <!-- KPI Summary Cards -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                <div>
+                    <span class="text-xs font-medium text-slate-500 uppercase tracking-wider">Active Tenders</span>
+                    <h3 id="stat-total" class="text-2xl font-bold text-slate-900 mt-0.5">0</h3>
+                </div>
+                <div class="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-folder-open"></i>
+                </div>
+            </div>
+
+            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                <div>
+                    <span class="text-xs font-medium text-slate-500 uppercase tracking-wider">In Progress</span>
+                    <h3 id="stat-inprogress" class="text-2xl font-bold text-amber-600 mt-0.5">0</h3>
+                </div>
+                <div class="w-10 h-10 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                </div>
+            </div>
+
+            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                <div>
+                    <span class="text-xs font-medium text-slate-500 uppercase tracking-wider">Submitted / Evaluated</span>
+                    <h3 id="stat-submitted" class="text-2xl font-bold text-purple-600 mt-0.5">0</h3>
+                </div>
+                <div class="w-10 h-10 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-paper-plane"></i>
+                </div>
+            </div>
+
+            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                <div>
+                    <span class="text-xs font-medium text-slate-500 uppercase tracking-wider">JV Participations</span>
+                    <h3 id="stat-jv" class="text-2xl font-bold text-emerald-600 mt-0.5">0</h3>
+                </div>
+                <div class="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-handshake"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter & Search Toolbar -->
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm mb-6 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+            <!-- Search Input -->
+            <div class="relative flex-1">
+                <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                <input type="text" id="input-search" placeholder="Search by procurement title, ID, entity, solution, or account manager..." 
+                    class="w-full pl-10 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition">
+            </div>
+
+            <!-- Filters -->
+            <div class="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0">
+                <!-- Status Filter -->
+                <select id="select-filter-status" class="px-3 py-2 text-xs font-medium bg-slate-50 border border-slate-200 rounded-lg text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="ALL">All Statuses</option>
+                    <option value="Draft">Draft</option>
+                    <option value="In Progress">In Progress</option>
+                    <option value="Submitted">Submitted</option>
+                    <option value="Awarded">Awarded / Won</option>
+                    <option value="Lost">Lost / Regret</option>
+                </select>
+
+                <!-- JV Filter -->
+                <select id="select-filter-jv" class="px-3 py-2 text-xs font-medium bg-slate-50 border border-slate-200 rounded-lg text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="ALL">All Venture Types</option>
+                    <option value="Yes">JV Tenders Only</option>
+                    <option value="No">Solo Tenders Only</option>
+                </select>
+
+                <!-- View Toggle (Grid / Table) -->
+                <div class="inline-flex rounded-lg border border-slate-200 p-0.5 bg-slate-50">
+                    <button id="view-toggle-grid" class="p-1.5 rounded-md text-slate-600 hover:text-blue-600 bg-white shadow-xs" title="Grid Card View">
+                        <i class="fa-solid fa-grip text-xs"></i>
+                    </button>
+                    <button id="view-toggle-table" class="p-1.5 rounded-md text-slate-400 hover:text-blue-600" title="Table View">
+                        <i class="fa-solid fa-list text-xs"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tender List Container (Grid View) -->
+        <div id="tenders-grid-view" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            <!-- Rendered dynamically by app.js -->
+        </div>
+
+        <!-- Tender Table View (Hidden by default) -->
+        <div id="tenders-table-view" class="hidden bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs text-slate-600">
+                    <thead class="bg-slate-50 text-slate-700 uppercase font-semibold border-b border-slate-200">
+                        <tr>
+                            <th class="px-4 py-3">Procurement ID & Title</th>
+                            <th class="px-4 py-3">Procuring Entity</th>
+                            <th class="px-4 py-3">Dates (Publish / Due)</th>
+                            <th class="px-4 py-3">JV Status</th>
+                            <th class="px-4 py-3">Account Mgr</th>
+                            <th class="px-4 py-3">Status</th>
+                            <th class="px-4 py-3 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tenders-table-body" class="divide-y divide-slate-100">
+                        <!-- Rendered dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Empty State (When no results found) -->
+        <div id="empty-state" class="hidden text-center py-16 bg-white rounded-2xl border border-dashed border-slate-300 p-8">
+            <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 text-2xl">
+                <i class="fa-regular fa-folder-open"></i>
+            </div>
+            <h3 class="text-base font-semibold text-slate-800">No tenders found</h3>
+            <p class="text-xs text-slate-500 max-w-sm mx-auto mt-1 mb-4">No procurement records match your search criteria. Create a new tender or reset your filters.</p>
+            <button id="btn-empty-create" class="px-4 py-2 text-xs font-semibold rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition">
+                <i class="fa-solid fa-plus mr-1"></i> Add Tender Details
+            </button>
+        </div>
+
+    </main>
+
+    <!-- MODAL 1: Create / Edit Tender Form -->
+    <div id="modal-tender-form" class="hidden fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4">
+        <div class="fixed inset-0 modal-overlay backdrop-blur-sm transition-opacity" id="modal-form-overlay"></div>
+        <div class="relative bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-2xl w-full max-h-[92vh] flex flex-col overflow-hidden">
+            
+            <!-- Modal Header -->
+            <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/70">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center text-sm">
+                        <i class="fa-solid fa-file-signature"></i>
+                    </div>
+                    <div>
+                        <h3 id="form-modal-title" class="text-base font-bold text-slate-900">Enter Tender Details</h3>
+                        <p class="text-xs text-slate-500">Fill in the procurement parameters and bid criteria</p>
+                    </div>
+                </div>
+                <button type="button" id="btn-close-form-modal" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Modal Form Body -->
+            <form id="tender-details-form" class="p-6 overflow-y-auto space-y-4 flex-1 text-xs">
+                <input type="hidden" id="form-tender-id">
+
+                <!-- Row 1: Procurement Title -->
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">
+                        Procurement Title <span class="text-rose-500">*</span>
+                    </label>
+                    <input type="text" id="form-procurement-title" required placeholder="e.g. Turnkey Implementation of National Cloud Infrastructure"
+                        class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition text-xs">
+                </div>
+
+                <!-- Row 2: Procurement ID & Procurement Entity -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">
+                            Procurement ID / Reference <span class="text-rose-500">*</span>
+                        </label>
+                        <input type="text" id="form-procurement-id" required placeholder="e.g. ICTA/GOSL/2026/RFP/088"
+                            class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 font-mono focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition text-xs">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">
+                            Procurement Entity <span class="text-rose-500">*</span>
+                        </label>
+                        <input type="text" id="form-procurement-entity" required placeholder="e.g. Ministry of Digital Infrastructure"
+                            class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition text-xs">
+                    </div>
+                </div>
+
+                <!-- Row 3: Publish Date & Submission Date -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">
+                            Publish Date <span class="text-rose-500">*</span>
+                        </label>
+                        <input type="date" id="form-publish-date" required
+                            class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition text-xs">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">
+                            Submission Date & Time <span class="text-rose-500">*</span>
+                        </label>
+                        <input type="datetime-local" id="form-submission-date" required
+                            class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition text-xs">
+                    </div>
+                </div>
+
+                <!-- Row 4: JV or Not & JV Partner Details -->
+                <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-200 space-y-2.5">
+                    <div class="flex items-center justify-between">
+                        <label class="font-semibold text-slate-700">Joint Venture (JV) Participation</label>
+                        <div class="flex items-center gap-4 text-xs font-medium">
+                            <label class="inline-flex items-center gap-1.5 cursor-pointer">
+                                <input type="radio" name="form-is-jv" value="No" checked class="text-blue-600 focus:ring-blue-500">
+                                <span>Solo (No JV)</span>
+                            </label>
+                            <label class="inline-flex items-center gap-1.5 cursor-pointer">
+                                <input type="radio" name="form-is-jv" value="Yes" class="text-blue-600 focus:ring-blue-500">
+                                <span class="text-blue-700 font-semibold">Yes (JV Consortium)</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div id="jv-details-container" class="hidden">
+                        <label class="block font-medium text-slate-600 mb-1">JV Partner Names & Share Percentage</label>
+                        <input type="text" id="form-jv-details" placeholder="e.g. Consortium with TechCloud Pte Ltd (We hold 60%, Partner holds 40%)"
+                            class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 transition text-xs">
+                    </div>
+                </div>
+
+                <!-- Row 5: Proposed Solution -->
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">
+                        Solution We Propose <span class="text-rose-500">*</span>
+                    </label>
+                    <textarea id="form-solution" rows="2" required placeholder="Describe the technical solution, architecture, key OEM products, or service model we are offering..."
+                        class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition text-xs"></textarea>
+                </div>
+
+                <!-- Row 6: Account Manager & Tender Status & Budget -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">
+                            Account Manager <span class="text-rose-500">*</span>
+                        </label>
+                        <input type="text" id="form-account-manager" required placeholder="e.g. Nuwan Perera"
+                            class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition text-xs">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Tender Status</label>
+                        <select id="form-status" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition text-xs font-medium">
+                            <option value="Draft">Draft</option>
+                            <option value="In Progress">In Progress</option>
+                            <option value="Submitted">Submitted</option>
+                            <option value="Awarded">Awarded / Won</option>
+                            <option value="Lost">Lost / Regret</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Our Bid Amount (Optional)</label>
+                        <div class="flex">
+                            <select id="form-currency" class="px-2 py-2 bg-slate-100 border border-r-0 border-slate-200 rounded-l-lg text-slate-700 text-xs">
+                                <option value="USD">USD</option>
+                                <option value="LKR">LKR</option>
+                                <option value="EUR">EUR</option>
+                                <option value="INR">INR</option>
+                                <option value="GBP">GBP</option>
+                            </select>
+                            <input type="number" id="form-bid-amount" placeholder="e.g. 3850000"
+                                class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-r-lg text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition text-xs">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Row 7: Remark or Update -->
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">
+                        Remark or Update <span class="text-rose-500">*</span>
+                    </label>
+                    <textarea id="form-remarks" rows="2" required placeholder="Enter the latest progress update, clarifications received, meeting minutes, or next action steps..."
+                        class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition text-xs"></textarea>
+                </div>
+
+                <!-- Form Action Buttons -->
+                <div class="pt-3 border-t border-slate-100 flex items-center justify-end gap-2.5">
+                    <button type="button" id="btn-cancel-form" class="px-4 py-2 text-xs font-semibold rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 transition">
+                        Cancel
+                    </button>
+                    <button type="submit" class="px-5 py-2 text-xs font-semibold rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition shadow-sm">
+                        <i class="fa-solid fa-floppy-disk mr-1.5"></i> Save Tender
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 2: Comprehensive Tender Dossier Workspace (Tabs: Overview & Solution, Documents & Analysis, Participated Readings, Checklist) -->
+    <div id="modal-dossier" class="hidden fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-3 sm:p-4">
+        <div class="fixed inset-0 modal-overlay backdrop-blur-sm transition-opacity" id="modal-dossier-overlay"></div>
+        <div class="relative bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-5xl w-full max-h-[94vh] flex flex-col overflow-hidden">
+            
+            <!-- Dossier Header -->
+            <div class="px-6 py-4 border-b border-slate-200 bg-slate-50/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center text-lg shadow-sm">
+                        <i class="fa-solid fa-folder-tree"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span id="dossier-id-badge" class="font-mono text-xs font-bold text-blue-700 bg-blue-100 px-2 py-0.5 rounded">TND-000</span>
+                            <span id="dossier-status-badge" class="text-xs font-semibold px-2.5 py-0.5 rounded-full badge-inprogress">In Progress</span>
+                            <span id="dossier-jv-badge" class="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-200 text-slate-700">Solo</span>
+                        </div>
+                        <h2 id="dossier-title" class="text-base font-bold text-slate-900 mt-0.5 leading-snug">Procurement Title</h2>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <!-- Export this tender to Excel -->
+                    <button id="btn-dossier-export-excel" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition" title="Export this tender dossier to Excel">
+                        <i class="fa-solid fa-file-excel"></i>
+                        <span>Export Excel</span>
+                    </button>
+                    <!-- Close button -->
+                    <button id="btn-close-dossier" class="text-slate-400 hover:text-slate-700 p-2 rounded-lg hover:bg-slate-200 transition">
+                        <i class="fa-solid fa-xmark text-lg"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Dossier Navigation Tabs -->
+            <div class="border-b border-slate-200 bg-white px-6 flex items-center gap-6 text-xs font-medium text-slate-500 overflow-x-auto">
+                <button class="tab-button py-3 text-slate-700 active flex items-center gap-2 border-b-2 border-transparent transition" data-target="tab-overview">
+                    <i class="fa-solid fa-circle-info"></i>
+                    <span>Tender Profile</span>
+                </button>
+                <button class="tab-button py-3 text-slate-700 flex items-center gap-2 border-b-2 border-transparent transition" data-target="tab-solution">
+                    <i class="fa-solid fa-lightbulb"></i>
+                    <span>Our Solution</span>
+                </button>
+                <button class="tab-button py-3 text-slate-700 flex items-center gap-2 border-b-2 border-transparent transition" data-target="tab-documents">
+                    <i class="fa-solid fa-file-lines"></i>
+                    <span>Documents & AI Analysis</span>
+                    <span id="badge-doc-count" class="bg-blue-100 text-blue-700 px-1.5 py-0.2 rounded-full font-bold text-[10px]">0</span>
+                </button>
+                <button class="tab-button py-3 text-slate-700 flex items-center gap-2 border-b-2 border-transparent transition" data-target="tab-competitors">
+                    <i class="fa-solid fa-users-viewfinder"></i>
+                    <span>Participated Readings</span>
+                    <span id="badge-comp-count" class="bg-indigo-100 text-indigo-700 px-1.5 py-0.2 rounded-full font-bold text-[10px]">0</span>
+                </button>
+                <button class="tab-button py-3 text-slate-700 flex items-center gap-2 border-b-2 border-transparent transition" data-target="tab-checklist">
+                    <i class="fa-solid fa-list-check"></i>
+                    <span>Compliance Checklist</span>
+                </button>
+            </div>
+
+            <!-- Tab Contents Container -->
+            <div class="flex-1 overflow-y-auto p-6 bg-slate-50 text-xs">
+
+                <!-- TAB 1: Tender Overview & Key Details -->
+                <div id="tab-overview" class="tab-content space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Entity & Account Manager Card -->
+                        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs space-y-3">
+                            <h4 class="font-bold text-slate-800 text-sm flex items-center gap-2 border-b border-slate-100 pb-2">
+                                <i class="fa-solid fa-building-columns text-blue-600"></i> Procuring Entity & Authority
+                            </h4>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <span class="text-slate-400 font-medium block">Procuring Entity</span>
+                                    <span id="dossier-entity" class="font-semibold text-slate-800 block text-sm">--</span>
+                                </div>
+                                <div>
+                                    <span class="text-slate-400 font-medium block">Account Manager</span>
+                                    <span id="dossier-am" class="font-semibold text-slate-800 block text-sm">--</span>
+                                </div>
+                                <div>
+                                    <span class="text-slate-400 font-medium block">Estimated Budget</span>
+                                    <span id="dossier-budget" class="font-semibold text-slate-800 block">--</span>
+                                </div>
+                                <div>
+                                    <span class="text-slate-400 font-medium block">Our Quoted Amount</span>
+                                    <span id="dossier-our-price" class="font-semibold text-emerald-600 block text-sm">--</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Timeline & Deadlines Card -->
+                        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs space-y-3">
+                            <h4 class="font-bold text-slate-800 text-sm flex items-center gap-2 border-b border-slate-100 pb-2">
+                                <i class="fa-solid fa-calendar-days text-indigo-600"></i> Critical Timeline & Dates
+                            </h4>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <span class="text-slate-400 font-medium block">Publish Date</span>
+                                    <span id="dossier-publish-date" class="font-semibold text-slate-800 block">--</span>
+                                </div>
+                                <div>
+                                    <span class="text-slate-400 font-medium block">Submission Deadline</span>
+                                    <span id="dossier-submission-date" class="font-semibold text-rose-600 block">--</span>
+                                </div>
+                                <div class="col-span-2 bg-amber-50 p-2.5 rounded-lg border border-amber-200 flex items-center justify-between">
+                                    <span class="text-amber-800 font-medium flex items-center gap-2">
+                                        <i class="fa-regular fa-clock"></i> Deadline Countdown:
+                                    </span>
+                                    <span id="dossier-countdown" class="font-bold text-amber-900">--</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Joint Venture (JV) Section -->
+                    <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
+                        <h4 class="font-bold text-slate-800 text-sm flex items-center gap-2 mb-2">
+                            <i class="fa-solid fa-handshake text-emerald-600"></i> Joint Venture (JV) Configuration
+                        </h4>
+                        <div class="p-3 bg-slate-50 rounded-lg border border-slate-200 flex items-start gap-3">
+                            <span id="dossier-jv-icon" class="text-emerald-600 text-lg"><i class="fa-solid fa-circle-check"></i></span>
+                            <div>
+                                <span class="font-bold text-slate-800 block text-xs" id="dossier-jv-label">Joint Venture Active</span>
+                                <p id="dossier-jv-text" class="text-slate-600 mt-0.5 text-xs">--</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Latest Remark or Update Section -->
+                    <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
+                        <div class="flex items-center justify-between mb-2">
+                            <h4 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                                <i class="fa-solid fa-message text-blue-600"></i> Remark or Update
+                            </h4>
+                            <span class="text-[11px] text-slate-400" id="dossier-last-updated">Last updated: Just now</span>
+                        </div>
+                        <div class="p-3.5 bg-blue-50/60 rounded-xl border border-blue-100 text-slate-700 leading-relaxed" id="dossier-remarks">
+                            --
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 2: Our Solution We Provide -->
+                <div id="tab-solution" class="tab-content hidden space-y-4">
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-xs space-y-4">
+                        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                            <div>
+                                <h4 class="font-bold text-slate-900 text-sm flex items-center gap-2">
+                                    <i class="fa-solid fa-cube text-blue-600"></i> Proposed Solution Specification
+                                </h4>
+                                <p class="text-xs text-slate-500">Technical proposal, architecture, and competitive value proposition</p>
+                            </div>
+                            <button id="btn-edit-solution" class="px-3 py-1.5 text-xs font-semibold rounded-lg border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 transition">
+                                <i class="fa-solid fa-pen-to-square mr-1"></i> Edit Solution Details
+                            </button>
+                        </div>
+
+                        <!-- Solution Summary -->
+                        <div>
+                            <span class="font-semibold text-slate-700 block mb-1">Executive Solution Summary</span>
+                            <div id="dossier-solution-summary" class="p-3.5 bg-slate-50 rounded-xl border border-slate-200 text-slate-800 leading-relaxed">
+                                --
+                            </div>
+                        </div>
+
+                        <!-- Technical Architecture & OEM Partners -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <span class="font-semibold text-slate-700 block mb-1">Architecture & Hardware/Software Specs</span>
+                                <div id="dossier-solution-arch" class="p-3 bg-slate-50 rounded-lg border border-slate-200 text-slate-700 min-h-[80px]">
+                                    --
+                                </div>
+                            </div>
+                            <div>
+                                <span class="font-semibold text-slate-700 block mb-1">OEM & Technology Vendors</span>
+                                <div id="dossier-solution-oem" class="p-3 bg-slate-50 rounded-lg border border-slate-200 text-slate-700 min-h-[80px]">
+                                    --
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Timeline & Key Differentiators -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <span class="font-semibold text-slate-700 block mb-1">Delivery Timeline & SLA Commitment</span>
+                                <div id="dossier-solution-timeline" class="p-3 bg-slate-50 rounded-lg border border-slate-200 text-slate-700">
+                                    --
+                                </div>
+                            </div>
+                            <div>
+                                <span class="font-semibold text-slate-700 block mb-1">Our Key Differentiators / Win Themes</span>
+                                <div id="dossier-solution-diff" class="p-3 bg-slate-50 rounded-lg border border-slate-200 text-slate-700">
+                                    --
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 3: Document Management & AI Document Analysis -->
+                <div id="tab-documents" class="tab-content hidden space-y-4">
+                    
+                    <!-- Document Upload Zone -->
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-xs space-y-3">
+                        <div class="flex items-center justify-between">
+                            <h4 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                                <i class="fa-solid fa-cloud-arrow-up text-blue-600"></i> Upload Tender Documents
+                            </h4>
+                            <span class="text-xs text-slate-400">PDF, Word, Excel, TXT (Analyzed client-side)</span>
+                        </div>
+
+                        <!-- Dropzone Area -->
+                        <div id="doc-drop-zone" class="drop-zone border-2 border-dashed border-slate-300 rounded-xl p-6 text-center hover:border-blue-500 hover:bg-blue-50/50 transition cursor-pointer">
+                            <input type="file" id="input-tender-doc" class="hidden" multiple accept=".pdf,.doc,.docx,.txt,.csv,.xlsx,.xls,.zip,.png,.jpg">
+                            <div class="w-12 h-12 mx-auto mb-2 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center text-xl">
+                                <i class="fa-solid fa-file-arrow-up"></i>
+                            </div>
+                            <p class="font-semibold text-slate-700 text-xs">
+                                Drag & drop documents here, or <span class="text-blue-600 underline">browse your files</span>
+                            </p>
+                            <p class="text-[11px] text-slate-400 mt-1">Upload RFPs, Technical Specs, BoQs, Addendums, or Bank Guarantees</p>
+                        </div>
+
+                        <!-- Document Category Select Helper -->
+                        <div class="flex items-center gap-3">
+                            <span class="font-medium text-slate-600 text-xs">Document Type / Category:</span>
+                            <select id="select-upload-category" class="px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-700">
+                                <option value="RFP / Tender Notice">RFP / Tender Notice</option>
+                                <option value="Technical Specifications">Technical Specifications</option>
+                                <option value="BoQ / Pricing Sheet">BoQ / Pricing Sheet</option>
+                                <option value="Addendum / Clarification">Addendum / Clarification</option>
+                                <option value="Bid Bond / Security">Bid Bond / Security</option>
+                                <option value="General Attachment">General Attachment</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Uploaded Documents Table -->
+                    <div class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+                        <div class="px-5 py-3 border-b border-slate-100 flex items-center justify-between">
+                            <h4 class="font-bold text-slate-800 text-xs uppercase tracking-wider">Attached Documents</h4>
+                            <span id="doc-table-counter" class="text-xs text-slate-500 font-medium">0 Documents</span>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs">
+                                <thead class="bg-slate-50 text-slate-600 border-b border-slate-200 font-semibold">
+                                    <tr>
+                                        <th class="px-4 py-2.5">File Name</th>
+                                        <th class="px-4 py-2.5">Category</th>
+                                        <th class="px-4 py-2.5">Size</th>
+                                        <th class="px-4 py-2.5">Analysis Status</th>
+                                        <th class="px-4 py-2.5 text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="dossier-docs-list" class="divide-y divide-slate-100">
+                                    <!-- Rendered dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Document Analysis Results Card (Shows when a doc is analyzed) -->
+                    <div id="analysis-results-card" class="hidden bg-white p-5 rounded-xl border border-blue-200 shadow-md space-y-4">
+                        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center text-sm">
+                                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-slate-900 text-sm">Document Analysis & Insights</h4>
+                                    <span id="analysis-file-name" class="text-xs text-slate-500">File: Tender_RFP.pdf</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span id="analysis-risk-badge" class="px-2.5 py-0.5 rounded-full font-bold text-xs bg-emerald-100 text-emerald-800">
+                                    Risk: Low
+                                </span>
+                                <button id="btn-apply-extracted-checklist" class="px-3 py-1 text-xs font-semibold rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition">
+                                    <i class="fa-solid fa-list-check mr-1"></i> Sync Checklist
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Analysis Insights Grid -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- Deadlines & Dates Detected -->
+                            <div class="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                                <span class="font-bold text-slate-800 text-xs block mb-1.5 flex items-center gap-1.5 text-blue-700">
+                                    <i class="fa-regular fa-calendar-check"></i> Extracted Dates & Deadlines
+                                </span>
+                                <ul id="analysis-deadlines-list" class="space-y-1 text-slate-700">
+                                    <!-- Dynamic -->
+                                </ul>
+                            </div>
+
+                            <!-- Bid Bond / Security -->
+                            <div class="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                                <span class="font-bold text-slate-800 text-xs block mb-1.5 flex items-center gap-1.5 text-amber-700">
+                                    <i class="fa-solid fa-shield-halved"></i> Bid Bond / Security Clause
+                                </span>
+                                <p id="analysis-security-text" class="text-slate-700 leading-snug">--</p>
+                            </div>
+
+                            <!-- Mandatory Eligibility Criteria -->
+                            <div class="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                                <span class="font-bold text-slate-800 text-xs block mb-1.5 flex items-center gap-1.5 text-purple-700">
+                                    <i class="fa-solid fa-award"></i> Eligibility & Qualification Criteria
+                                </span>
+                                <ul id="analysis-eligibility-list" class="space-y-1 text-slate-700 list-disc list-inside">
+                                    <!-- Dynamic -->
+                                </ul>
+                            </div>
+
+                            <!-- Liquidated Damages & Risk Clauses -->
+                            <div class="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                                <span class="font-bold text-slate-800 text-xs block mb-1.5 flex items-center gap-1.5 text-rose-700">
+                                    <i class="fa-solid fa-triangle-exclamation"></i> Penalty & Liquidated Damages
+                                </span>
+                                <p id="analysis-penalty-text" class="text-slate-700 leading-snug">--</p>
+                            </div>
+                        </div>
+
+                        <!-- Keywords Extracted -->
+                        <div>
+                            <span class="font-semibold text-slate-700 text-xs block mb-1.5">Identified Tender Technical Domain Tags:</span>
+                            <div id="analysis-keywords-cloud" class="flex flex-wrap gap-1.5">
+                                <!-- Tags -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 4: Participated Company Readings & Competitor Analysis -->
+                <div id="tab-competitors" class="tab-content hidden space-y-5">
+                    
+                    <!-- Competitor Action Toolbar & Analytics -->
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-xs space-y-4">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <div>
+                                <h4 class="font-bold text-slate-900 text-sm flex items-center gap-2">
+                                    <i class="fa-solid fa-chart-simple text-blue-600"></i> Bid Opening Readings & Competitor Analysis
+                                </h4>
+                                <p class="text-xs text-slate-500">Record financial read-out prices, technical rankings, and solution details of all bidders</p>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button id="btn-copy-readings-gsheet" class="px-3 py-1.5 text-xs font-semibold rounded-lg border border-emerald-300 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 transition" title="Copy readings table directly for Google Sheets">
+                                    <i class="fa-solid fa-table text-emerald-600 mr-1"></i> Copy for Google Sheets
+                                </button>
+                                <button id="btn-add-competitor" class="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition shadow-sm">
+                                    <i class="fa-solid fa-plus mr-1"></i> Add Bid Reading
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Visual Price Comparison Chart -->
+                        <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                            <h5 class="text-xs font-semibold text-slate-700 mb-2 flex items-center justify-between">
+                                <span>Bid Price Comparison (Read-Out Values)</span>
+                                <span class="text-[11px] text-slate-400 font-normal">Our bid is highlighted in blue</span>
+                            </h5>
+                            <div class="h-64 relative w-full">
+                                <canvas id="chart-competitors"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Participated Companies Table -->
+                        <div class="overflow-x-auto rounded-xl border border-slate-200">
+                            <table class="w-full text-left text-xs">
+                                <thead class="bg-slate-100 text-slate-700 font-semibold border-b border-slate-200">
+                                    <tr>
+                                        <th class="px-3.5 py-2.5">Company / Bidder Name</th>
+                                        <th class="px-3.5 py-2.5">Bid Price (Reading)</th>
+                                        <th class="px-3.5 py-2.5">Variance vs Our Bid</th>
+                                        <th class="px-3.5 py-2.5">Tech Score</th>
+                                        <th class="px-3.5 py-2.5">Proposed Solution / OEM</th>
+                                        <th class="px-3.5 py-2.5">Rank / Status</th>
+                                        <th class="px-3.5 py-2.5">Remarks</th>
+                                        <th class="px-3.5 py-2.5 text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="table-competitors-body" class="divide-y divide-slate-100 bg-white">
+                                    <!-- Rendered dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 5: Compliance Checklist -->
+                <div id="tab-checklist" class="tab-content hidden space-y-4">
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-xs space-y-4">
+                        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                            <div>
+                                <h4 class="font-bold text-slate-900 text-sm flex items-center gap-2">
+                                    <i class="fa-solid fa-clipboard-check text-emerald-600"></i> Tender Submission Compliance Checklist
+                                </h4>
+                                <p class="text-xs text-slate-500">Track all mandatory documentation and qualification deliverables</p>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span id="checklist-progress-text" class="text-xs font-bold text-slate-700">0 / 0 Completed</span>
+                                <div class="w-24 bg-slate-200 h-2 rounded-full overflow-hidden">
+                                    <div id="checklist-progress-bar" class="bg-emerald-500 h-full w-0 transition-all duration-300"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Add Checklist Item -->
+                        <div class="flex items-center gap-2">
+                            <input type="text" id="input-new-check-item" placeholder="Add custom requirement item (e.g. Valid Tax Certificate, OEM MAF)..."
+                                class="flex-1 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <button id="btn-add-check-item" class="px-3.5 py-2 text-xs font-semibold rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition">
+                                <i class="fa-solid fa-plus mr-1"></i> Add Item
+                            </button>
+                        </div>
+
+                        <!-- Checklist Items Container -->
+                        <div id="checklist-items-container" class="space-y-2">
+                            <!-- Dynamic items -->
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 3: Add/Edit Participated Company Reading -->
+    <div id="modal-competitor-form" class="hidden fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4">
+        <div class="fixed inset-0 modal-overlay backdrop-blur-sm" id="modal-comp-overlay"></div>
+        <div class="relative bg-white rounded-2xl shadow-xl border border-slate-200 max-w-lg w-full p-6 text-xs">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+                <h3 id="comp-modal-title" class="font-bold text-slate-900 text-sm">Record Participated Company Reading</h3>
+                <button id="btn-close-comp-modal" class="text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <form id="competitor-form" class="space-y-3.5">
+                <input type="hidden" id="comp-edit-id">
+
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Company / Bidder Name <span class="text-rose-500">*</span></label>
+                    <input type="text" id="comp-name" required placeholder="e.g. Global Telecom Systems PLC"
+                        class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Bid Price (Read-out) <span class="text-rose-500">*</span></label>
+                        <input type="number" id="comp-price" required step="any" placeholder="e.g. 4100000"
+                            class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Technical Score (%)</label>
+                        <input type="number" id="comp-tech-score" step="0.1" min="0" max="100" placeholder="e.g. 88.5"
+                            class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Rank / Status</label>
+                        <select id="comp-rank" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs">
+                            <option value="L1 (Lowest)">L1 (Lowest Evaluated)</option>
+                            <option value="L2">L2</option>
+                            <option value="L3">L3</option>
+                            <option value="Under Evaluation">Under Evaluation</option>
+                            <option value="Disqualified">Disqualified</option>
+                            <option value="Non-Compliant">Non-Compliant</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Solution / Brand Offered</label>
+                        <input type="text" id="comp-solution" placeholder="e.g. Huawei Cloud Stack"
+                            class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Evaluation Remarks / Notes</label>
+                    <textarea id="comp-remarks" rows="2" placeholder="e.g. Second lowest price; omitted warranty extension for networking layer."
+                        class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs"></textarea>
+                </div>
+
+                <div class="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
+                    <button type="button" id="btn-cancel-comp" class="px-4 py-2 border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold">Save Reading</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container"></div>
+
+    <!-- Application JavaScript Modules -->
+    <script src="js/storage.js"></script>
+    <script src="js/sample-data.js"></script>
+    <script src="js/analyzer.js"></script>
+    <script src="js/excel-export.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
